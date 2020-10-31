@@ -8,6 +8,7 @@ import os
 import sqlite3
 import sys
 
+global columns
 app = Flask(__name__, static_url_path='/static')
 db_path = os.environ.get('DB_PATH', default=None)
 if not db_path:
@@ -15,11 +16,17 @@ if not db_path:
     exit(1)
 try:
     connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    cursor.execute("PRAGMA table_info('users');")
+    connection.commit()
+    res = cursor.fetchall()
+    columns = frozenset(column[1] for column in res)
 except:
     sys.stderr.write("FATAL ERROR: bad connection to database. Exception's output below.\n\n")
     raise
-if connection:
-    connection.close()
+finally:
+    if connection:
+        connection.close()
 
 
 @app.route('/')
@@ -56,3 +63,72 @@ def get_user_info():
         return result
     else:
         return jsonify({'error': 'Unknown error.'}), 500
+
+
+@app.route('/api/v1/modify_users', methods=['POST'])
+def modify_users():
+    try:
+        data = request.get_json()
+    except:
+        return jsonify({'error': 'Malformed JSON.'}), 400
+
+    ids = []
+    if type(data) == type(dict()):
+        if not 'id' in data:
+            return jsonify({'error': "Missing field 'id' in data."}), 400
+        ids = [str(data['id'])]
+    elif type(data) == type(list()):
+        for user in data:
+            if not 'id' in user:
+                return jsonify({'error': "Missing field 'id' in data."}), 400
+            ids.append(str(user['id']))
+    else:
+        return jsonify({'error': "Unsupported object. Only dictionary and list are allowed."}), 400
+
+    not_inserted = []
+    try:
+        connection = sqlite3.connect(db_path)
+        cursor = connection.cursor()
+        if type(data) == type(dict()):
+            data = [data]
+
+        for user in data:
+            try:
+                cursor.executescript(__build_request(user))
+                connection.commit()
+            except sqlite3.Error as error:
+                user['error_msg'] = str(error)
+                not_inserted.append(user)
+    except sqlite3.Error:
+        pass
+    finally:
+        if connection:
+            connection.close()
+    
+    if len(not_inserted) > 0:
+        return jsonify({
+            'Error': "Some users could not be inserted or updated. Check 'error_msg' field in users.", 
+            'Users': not_inserted
+            }), 500
+    else:
+        return jsonify({'Message': 'All OK.'}), 200
+
+
+def __sqlite_escape_string(string):
+    return string.replace("'", "''")
+
+
+def __build_request(data):
+    request = 'INSERT OR IGNORE INTO users ({0}) VALUES({1});\nUPDATE users SET {2} WHERE id={3};'
+    keys, values = list(), list()
+
+    for key in data:
+        keys.append(__sqlite_escape_string(str(key)))
+        values.append("'" + __sqlite_escape_string(str(data[key])) + "'")
+
+    return request.format(
+        ', '.join(keys), 
+        ', '.join(values), 
+        ', '.join("'" + __sqlite_escape_string(str(key)) + "' = '" + __sqlite_escape_string(str(data[key])) + "'" for key in data), 
+        str(data['id'])
+    )
