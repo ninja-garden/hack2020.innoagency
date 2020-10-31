@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="text_block"> 
+        Введите ID пользователя, чтобы получить информацию о нём.
+        <br>
+        <form>
+            <label for="uid">ID пользователя: </label>
+            <input type="text" id="uid" name="uid"><br>
+            <button id="submit_id" type="button"> Click</button>
+        </form>
+    </div> 
+    <div class="text_block" id="user_info">
+    </div>
+
+<script type="text/javascript" url="/js/render_user_info.js"></script>
+{% endblock %}
