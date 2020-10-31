@@ -1,7 +1,8 @@
 from flask import (
     Flask,
     jsonify,
-    render_template
+    render_template,
+    request,
 )
 import os
 import sqlite3
@@ -32,23 +33,26 @@ def get_user_info():
     result = None
 
     if not uid or len(uid) == 0:
-        return {'error': 'No uid specified.'}, 400
+        return jsonify({'error': 'No uid specified.'}), 400
 
     try:
         connection = sqlite3.connect(db_path)
+        cursor = connection.cursor()
         cursor.execute("SELECT * FROM users WHERE id = '{}';".format(uid))
         connection.commit()
         uinfo = cursor.fetchone()
         if uinfo:
             scheme = [description[0] for description in cursor.description]
-            result = {kv[0]: kv[1] for kv in zip(scheme, uinfo)}, 200
+            result = jsonify({kv[0]: kv[1] for kv in zip(scheme, uinfo)}), 200
+        else:
+            result = jsonify({'error': 'No user id found.'}), 400
     except sqlite3.Error as error:
-        result = {'error', 'Database error, message: "{}"'.format(error.args[0])}, 500
+        result = jsonify({'error', 'Database error, message: "{}"'.format(error.args[0])}), 500
     finally:
         if connection:
             connection.close()
     
     if result is not None:
-        return err_result
+        return result
     else:
-        return {'error': 'No result.'}, 500
+        return jsonify({'error': 'Unknown error.'}), 500

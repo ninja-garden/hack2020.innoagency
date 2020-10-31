@@ -5,13 +5,14 @@
         Введите ID пользователя, чтобы получить информацию о нём.
         <br>
         <form>
-            <label for="uid">ID пользователя: </label>
+            <label for="uid">ID пользователя: </label><br>
             <input type="text" id="uid" name="uid"><br>
-            <button id="submit_id" type="button"> Click</button>
+            <button id="submit_id" type="button">Поиск</button><br>
         </form>
     </div> 
     <div class="text_block" id="user_info">
     </div>
 
-<script type="text/javascript" url="/js/render_user_info.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/render_user_info.js') }}"></script>
 {% endblock %}
