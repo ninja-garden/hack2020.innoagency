@@ -4,7 +4,7 @@
 Файл с примером работы модели на датасете с книгами - **model_example.ipynb**. 
 <br><br>
 **model.py** - сама модель рекомендаций
-Модель использует **clients_neighbors.csv** и **books_neighbors.csv** для расчета рекомендаций. Данные таблицы расчитываются скриптом из make_neighbors_files.ipynb
+Модель использует **clients_neighbors.csv** и **books_neighbors.csv** для расчета рекомендаций. Данные таблицы расчитываются скриптом из **make_neighbors_files.ipynb**
 <br><br>
 **make_neighbors_files.ipynb** использует матрицы схожести объектов. Схожесть объектов расчитывается файлом **similarity.ipynb**
 <br><br>
